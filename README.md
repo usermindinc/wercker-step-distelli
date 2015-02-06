@@ -1,14 +1,14 @@
 # distelli
 
-> NOTE: THIS STEP IS STILL UNDER HEAVY DEVELOPMENT AND IS NOT READY FOR USE.
-
 Downloads the [Distelli CLI](https://www.distelli.com/docs/distelli-cli-reference) and runs a command.
 
 ## Options.
 
 ### required
 
-* `command` - command to run. Currently only "supports" `push`.
+* `command` - command to run. Currently only "supports" `push` and `deploy`.
+* `accessKey` - the Distelli access key (token) for using the CLI
+* `secretKey` - the Distelli secret key for using the CLI
 
 ### optional
 
@@ -17,17 +17,19 @@ Downloads the [Distelli CLI](https://www.distelli.com/docs/distelli-cli-referenc
 
 # Example
 
-Push a build to Distelli. The build will have a commit message of the form 'wercker:${WERCKER_BUILD_ID}`.
+Push a build to Distelli. The build will have a commit message of the form `wercker:${WERCKER_BUILD_ID}`.
 This form is necessary to locate the pushed bundle for later deployment.
 
 ``` yaml
 build:
   steps:
     - distelli:
+        accessKey: ${DISTELLI_TOKEN}
+        secretKey: ${DISTELLI_SECRET}
         command: push
 ```
 
 # Changelog
 
-## 0.0.1
- - development release
+## 0.1.0
+ - initial release
