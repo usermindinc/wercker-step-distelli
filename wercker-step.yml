@@ -1,0 +1,25 @@
+name: distelli
+version: "0.1.0"
+description: Executes a distelli CLI command
+keywords:
+  - distelli
+properties:
+  accessKey:
+    type: string
+    required: true
+  secretKey:
+    type: string
+    required: true
+  branches:
+    type: array
+    required: false
+    default: ['master']
+  command:
+    type: string
+    required: true
+    enum: ['push','deploy']
+  manifest:
+    type: string
+    required: false
+    default: distelli-manifest.yml
+

@@ -1,0 +1,21 @@
+box: wercker/default
+
+build:
+  steps:
+    - shellcheck
+
+    - validate-wercker-step
+
+    - copy-to-output:
+        exclude: wercker.yml .git .gitignore install.sh
+
+    - script:
+        name: fetch distelli
+        code: |
+          wget -qO- http://download.distelli.com/setup | sh -s "${WERCKER_OUTPUT_DIR}"
+
+    - script:
+        name: verify setup
+        code: |
+          source "${WERCKER_SOURCE_DIR}/setup.sh"
+
