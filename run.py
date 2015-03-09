@@ -86,7 +86,9 @@ def locate_build_id():
     if not build_id:
         with open(build_filename, 'r') as build_file:
             build_id = build_file.readline()
+            os.putenv("WERCKER_BUILD_ID", build_id)
     else:
+        message("Saving build id %s to %s" % (build_id, build_filename))
         with open(build_filename, 'w') as build_file:
             build_file.writelines([build_id, ''])
 
@@ -175,7 +177,7 @@ def deploy():
     release_id = locate_release_id()
     (dirname, basename) = check_manifest()
 
-    args.extend(["-y", "-f", basename, "-r", release_id, "-m", "wercker:%s" % build_id])
+    args.extend(["-y", "-f", basename, "-r", release_id, "-m", "wercker:%s" % locate_build_id()])
 
     cmd = "deploy %s" % " ".join(args)
     output = invoke(cmd, capture=True)
