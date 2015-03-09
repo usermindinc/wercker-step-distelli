@@ -8,11 +8,12 @@ import sys
 import yaml
 
 distelli = os.path.join(os.getenv("WERCKER_STEP_ROOT"), "DistelliCLI", "bin", "distelli")
+cache_dir = os.getenv("WERCKER_CACHE_DIR")
 git_branch = os.getenv("WERCKER_GIT_BRANCH")
 git_commit = os.getenv("WERCKER_GIT_COMMIT")
 output_dir = os.getenv("WERCKER_OUTPUT_DIR")
 temp_dir = os.getenv("WERCKER_STEP_TEMP")
-build_id = os.getenv("WERCKER_BUILD_ID")
+
 
 def message(text):
     print(text, file=sys.stderr)
@@ -78,14 +79,29 @@ def locate_app_name():
     return app
 
 
+def locate_build_id():
+    build_id = os.getenv("WERCKER_BUILD_ID")
+    build_filename = os.path.join(cache_dir, "usermind-build-id.txt")
+
+    if not build_id:
+        with open(build_filename, 'r') as build_file:
+            build_id = build_file.readline()
+    else:
+        with open(build_filename, 'w') as build_file:
+            build_file.writelines([build_id, ''])
+
+    return build_id
+
+
 def locate_release_id():
     release_id = os.getenv("WERCKER_DISTELLI_RELEASE")
+    build_id = locate_build_id()
 
     if not release_id:
         # Nothing was specified, so we need to query distelli and look for the release
         app = locate_app_name()
 
-        output = invoke("list releases -n %s -f csv" % app, capture = True)
+        output = invoke("list releases -n %s -f csv" % app, capture=True)
         reader = csv.reader(output.splitlines())
         for row in reader:
             description = row[3]
@@ -138,9 +154,7 @@ def invoke(cmd, capture = False):
 def push():
     (dirname, basename) = check_manifest()
 
-    # simulate using bundle for now
-    # invoke("bundle -f %s -b %s" % (basename, temp_dir))
-    invoke("push -f %s -m wercker:%s" % (basename, build_id))
+    invoke("push -f %s -m wercker:%s" % (basename, locate_build_id()))
 
 
 def deploy():
