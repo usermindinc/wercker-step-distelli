@@ -96,7 +96,7 @@ def locate_release_id(build_url):
             break
 
     if not release_id:
-        fail("Unable to locate release for build %s in app %s" % (build_id, app))
+        fail("Unable to locate release for build %s in app %s" % (build_url, app))
 
     return release_id
 
