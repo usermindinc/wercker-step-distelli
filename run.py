@@ -194,14 +194,14 @@ def main():
     check_credentials()
 
     command = os.getenv("WERCKER_DISTELLI_COMMAND")
-    build_id = os.getenv("WERCKER_BUILD_ID")
+    build_url = os.getenv("WERCKER_BUILD_URL")
     deploy_url = os.getenv("WERCKER_DEPLOY_URL")
 
     if command is None:
         fail("command must be set")
 
     elif command == "push":
-        push(build_id)
+        push(build_url)
 
     elif command == "deploy":
         deploy(deploy_url)
