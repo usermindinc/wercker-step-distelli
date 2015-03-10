@@ -178,9 +178,12 @@ def deploy(deploy_id):
     args.extend(["-y", "-f", basename, "-r", release_id, "-m", os.getenv("WERCKER_DEPLOY_URL")])
 
     cmd = "deploy %s" % " ".join(args)
+    info(cmd)
     output = invoke(cmd, capture=True)
     if "Deployment Failed" in output:
         fail(output)
+    else:
+        info(output)
 
 
 def main():
