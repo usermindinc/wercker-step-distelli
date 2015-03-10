@@ -7,12 +7,16 @@ import subprocess
 import sys
 import yaml
 
+root = os.getenv("WERCKER_ROOT")
+release_filename = os.path.join(root, "usermind-release.txt")
+
 distelli = os.path.join(os.getenv("WERCKER_STEP_ROOT"), "DistelliCLI", "bin", "distelli")
+cache_dir = os.getenv("WERCKER_CACHE_DIR")
 git_branch = os.getenv("WERCKER_GIT_BRANCH")
 git_commit = os.getenv("WERCKER_GIT_COMMIT")
 output_dir = os.getenv("WERCKER_OUTPUT_DIR")
 temp_dir = os.getenv("WERCKER_STEP_TEMP")
-build_id = os.getenv("WERCKER_BUILD_ID")
+
 
 def message(text):
     print(text, file=sys.stderr)
@@ -78,30 +82,40 @@ def locate_app_name():
     return app
 
 
-def locate_release_id():
-    release_id = os.getenv("WERCKER_DISTELLI_RELEASE")
+def locate_release_id(build_id):
+    release_id = None
+    app = locate_app_name()
+
+    output = invoke("list releases -n %s -f csv" % app, capture=True)
+    reader = csv.reader(output.splitlines())
+    for row in reader:
+        description = row[3]
+        if description == "wercker:%s" % build_id:
+            release_id = row[1]
+            break
 
     if not release_id:
-        # Nothing was specified, so we need to query distelli and look for the release
-        app = locate_app_name()
-
-        output = invoke("list releases -n %s -f csv" % app, capture = True)
-        reader = csv.reader(output.splitlines())
-        for row in reader:
-            description = row[3]
-            if description == "wercker:%s" % build_id:
-                release_id = row[1]
-                # Releases are listed in creation order. In the case of failures,
-                # it's possible multiple releases are created for the same build
-                # id. Continue iterating in order to find the most recent release.
-
-        if not release_id:
-            fail("Unable to locate release for build %s in app %s" % (build_id, app))
+        fail("Unable to locate release for build %s in app %s" % (build_id, app))
 
     return release_id
 
 
-def invoke(cmd, capture = False):
+def load_release_id():
+    release_id = os.getenv("WERCKER_DISTELLI_RELEASE")
+
+    if not release_id:
+        with open(release_filename, "r") as release_file:
+            release_id = release_file.readline()
+
+    return release_id
+
+
+def save_release_id(release_id):
+    with open(release_filename, "w") as release_file:
+        release_file.writelines([release_id, ''])
+
+
+def invoke(cmd, capture=False):
     (dirname, basename) = check_manifest()
 
     # Distelli 1.88 assumes manifest is in CWD
@@ -135,15 +149,15 @@ def invoke(cmd, capture = False):
     return output
 
 
-def push():
+def push(build_id):
     (dirname, basename) = check_manifest()
 
-    # simulate using bundle for now
-    # invoke("bundle -f %s -b %s" % (basename, temp_dir))
     invoke("push -f %s -m wercker:%s" % (basename, build_id))
+    release_id = locate_release_id(build_id)
+    save_release_id(release_id)
 
 
-def deploy():
+def deploy(deploy_id):
     args = []
 
     environment = os.getenv("WERCKER_DISTELLI_ENVIRONMENT")
@@ -158,10 +172,10 @@ def deploy():
     else:
         fail("Either environment or host must be set")
 
-    release_id = locate_release_id()
+    release_id = load_release_id()
     (dirname, basename) = check_manifest()
 
-    args.extend(["-y", "-f", basename, "-r", release_id, "-m", "wercker:%s" % build_id])
+    args.extend(["-y", "-f", basename, "-r", release_id, "-m", os.getenv("WERCKER_DEPLOY_URL")])
 
     cmd = "deploy %s" % " ".join(args)
     output = invoke(cmd, capture=True)
@@ -176,15 +190,17 @@ def main():
     check_credentials()
 
     command = os.getenv("WERCKER_DISTELLI_COMMAND")
+    build_id = os.getenv("WERCKER_BUILD_ID")
+    deploy_id = os.getenv("WERCKER_DEPLOY_ID")
 
     if command is None:
         fail("command must be set")
 
     elif command == "push":
-        push()
+        push(build_id)
 
     elif command == "deploy":
-        deploy()
+        deploy(deploy_id)
 
     else:
         fail("unknown command: %s" % command)
