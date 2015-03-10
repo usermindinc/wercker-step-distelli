@@ -158,7 +158,7 @@ def push(build_url):
     save_release_id(release_id)
 
 
-def deploy(deploy_id):
+def deploy(description):
     args = []
 
     environment = os.getenv("WERCKER_DISTELLI_ENVIRONMENT")
@@ -174,8 +174,9 @@ def deploy(deploy_id):
         fail("Either environment or host must be set")
 
     release_id = load_release_id()
+    (dirname, basename) = check_manifest()
 
-    args.extend(["-y", "-r", release_id, "-m", os.getenv("WERCKER_DEPLOY_URL")])
+    args.extend(["-y", "-f", basename, "-r", release_id, "-m", description])
 
     cmd = "deploy %s" % " ".join(args)
     info(cmd)
@@ -194,7 +195,7 @@ def main():
 
     command = os.getenv("WERCKER_DISTELLI_COMMAND")
     build_id = os.getenv("WERCKER_BUILD_ID")
-    deploy_id = os.getenv("WERCKER_DEPLOY_ID")
+    deploy_url = os.getenv("WERCKER_DEPLOY_URL")
 
     if command is None:
         fail("command must be set")
@@ -203,7 +204,7 @@ def main():
         push(build_id)
 
     elif command == "deploy":
-        deploy(deploy_id)
+        deploy(deploy_url)
 
     else:
         fail("unknown command: %s" % command)
