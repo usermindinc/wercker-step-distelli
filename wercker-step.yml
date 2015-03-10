@@ -1,5 +1,5 @@
 name: distelli
-version: "0.1.2-alpha1"
+version: "0.1.2-alpha2"
 description: Executes a distelli CLI command
 keywords:
   - distelli
