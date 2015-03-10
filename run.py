@@ -175,7 +175,7 @@ def deploy(deploy_id):
     release_id = load_release_id()
     (dirname, basename) = check_manifest()
 
-    args.extend(["-y", "-f", basename, "-r", release_id, "-m", "wercker:%s" % deploy_id])
+    args.extend(["-y", "-f", basename, "-r", release_id, "-m", os.getenv("WERCKER_DEPLOY_URL")])
 
     cmd = "deploy %s" % " ".join(args)
     output = invoke(cmd, capture=True)
