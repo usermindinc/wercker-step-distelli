@@ -83,7 +83,7 @@ def locate_app_name():
     return app
 
 
-def locate_release_id(build_id):
+def locate_release_id(build_url):
     release_id = None
     app = locate_app_name()
 
@@ -91,7 +91,7 @@ def locate_release_id(build_id):
     reader = csv.reader(output.splitlines())
     for row in reader:
         description = row[3]
-        if description == "wercker:%s" % build_id:
+        if build_url in description:
             release_id = row[1]
             break
 
@@ -150,11 +150,11 @@ def invoke(cmd, capture=False):
     return output
 
 
-def push(build_id):
+def push(build_url):
     (dirname, basename) = check_manifest()
 
-    invoke("push -f %s -m wercker:%s" % (basename, build_id))
-    release_id = locate_release_id(build_id)
+    invoke("push -f %s -m %s" % (basename, build_url))
+    release_id = locate_release_id(build_url)
     save_release_id(release_id)
 
 
@@ -174,9 +174,8 @@ def deploy(deploy_id):
         fail("Either environment or host must be set")
 
     release_id = load_release_id()
-    (dirname, basename) = check_manifest()
 
-    args.extend(["-y", "-f", basename, "-r", release_id, "-m", os.getenv("WERCKER_DEPLOY_URL")])
+    args.extend(["-y", "-r", release_id, "-m", os.getenv("WERCKER_DEPLOY_URL")])
 
     cmd = "deploy %s" % " ".join(args)
     info(cmd)
