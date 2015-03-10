@@ -8,7 +8,8 @@ import sys
 import yaml
 
 root = os.getenv("WERCKER_ROOT")
-release_filename = os.path.join(root, "usermind-release.txt")
+release_filename = os.getenv("WERCKER_DISTELLI_RELEASEFILENAME", "usermind-release.txt")
+release_filepath = os.path.join(root, release_filename)
 
 distelli = os.path.join(os.getenv("WERCKER_STEP_ROOT"), "DistelliCLI", "bin", "distelli")
 cache_dir = os.getenv("WERCKER_CACHE_DIR")
