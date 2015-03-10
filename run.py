@@ -8,7 +8,8 @@ import sys
 import yaml
 
 root = os.getenv("WERCKER_ROOT")
-release_filename = os.path.join(root, "usermind-release.txt")
+release_filename = os.getenv("WERCKER_DISTELLI_RELEASEFILENAME", "usermind-release.txt")
+release_filepath = os.path.join(root, release_filename)
 
 distelli = os.path.join(os.getenv("WERCKER_STEP_ROOT"), "DistelliCLI", "bin", "distelli")
 cache_dir = os.getenv("WERCKER_CACHE_DIR")
@@ -82,7 +83,7 @@ def locate_app_name():
     return app
 
 
-def locate_release_id(build_id):
+def locate_release_id(build_url):
     release_id = None
     app = locate_app_name()
 
@@ -90,12 +91,12 @@ def locate_release_id(build_id):
     reader = csv.reader(output.splitlines())
     for row in reader:
         description = row[3]
-        if description == "wercker:%s" % build_id:
+        if build_url in description:
             release_id = row[1]
             break
 
     if not release_id:
-        fail("Unable to locate release for build %s in app %s" % (build_id, app))
+        fail("Unable to locate release for build %s in app %s" % (build_url, app))
 
     return release_id
 
@@ -149,15 +150,15 @@ def invoke(cmd, capture=False):
     return output
 
 
-def push(build_id):
+def push(build_url):
     (dirname, basename) = check_manifest()
 
-    invoke("push -f %s -m wercker:%s" % (basename, build_id))
-    release_id = locate_release_id(build_id)
+    invoke("push -f %s -m %s" % (basename, build_url))
+    release_id = locate_release_id(build_url)
     save_release_id(release_id)
 
 
-def deploy(deploy_id):
+def deploy(description):
     args = []
 
     environment = os.getenv("WERCKER_DISTELLI_ENVIRONMENT")
@@ -175,12 +176,15 @@ def deploy(deploy_id):
     release_id = load_release_id()
     (dirname, basename) = check_manifest()
 
-    args.extend(["-y", "-f", basename, "-r", release_id, "-m", os.getenv("WERCKER_DEPLOY_URL")])
+    args.extend(["-y", "-f", basename, "-r", release_id, "-m", description])
 
     cmd = "deploy %s" % " ".join(args)
+    info(cmd)
     output = invoke(cmd, capture=True)
     if "Deployment Failed" in output:
         fail(output)
+    else:
+        info(output)
 
 
 def main():
@@ -190,17 +194,17 @@ def main():
     check_credentials()
 
     command = os.getenv("WERCKER_DISTELLI_COMMAND")
-    build_id = os.getenv("WERCKER_BUILD_ID")
-    deploy_id = os.getenv("WERCKER_DEPLOY_ID")
+    build_url = os.getenv("WERCKER_BUILD_URL")
+    deploy_url = os.getenv("WERCKER_DEPLOY_URL")
 
     if command is None:
         fail("command must be set")
 
     elif command == "push":
-        push(build_id)
+        push(build_url)
 
     elif command == "deploy":
-        deploy(deploy_id)
+        deploy(deploy_url)
 
     else:
         fail("unknown command: %s" % command)
