@@ -1,5 +1,5 @@
 name: distelli
-version: "0.1.4-alpha1"
+version: "0.1.4-alpha2"
 description: Executes a distelli CLI command
 keywords:
   - distelli
@@ -13,7 +13,7 @@ properties:
   branches:
     type: array
     required: false
-    default: ['master']
+    default: []
   command:
     type: string
     required: true

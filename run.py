@@ -35,7 +35,7 @@ def fail(text):
 def check_branches():
     branches = os.getenv("WERCKER_DISTELLI_BRANCHES")
 
-    if branches is None:
+    if not branches:
         return
 
     for branch in branches.split(","):
