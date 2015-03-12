@@ -35,7 +35,7 @@ def fail(text):
 def check_branches():
     branches = os.getenv("WERCKER_DISTELLI_BRANCHES")
 
-    if branches is None:
+    if not branches:
         return
 
     for branch in branches.split(","):
@@ -105,8 +105,9 @@ def load_release_id():
     release_id = os.getenv("WERCKER_DISTELLI_RELEASE")
 
     if not release_id:
-        with open(release_filename, "r") as release_file:
-            release_id = release_file.readline()
+        if os.path.exists(release_filename):
+            with open(release_filename, "r") as release_file:
+                release_id = release_file.readline()
 
     return release_id
 
@@ -121,7 +122,10 @@ def invoke(cmd, capture=False):
 
     # Distelli 1.88 assumes manifest is in CWD
     old_cwd = os.getcwd()
-    os.chdir(dirname)
+
+    # If dirname is blank, don't try to CD
+    if dirname:
+        os.chdir(dirname)
 
     # Wercker checks us out to a commit, not a branch name (sensible, since the
     # branch may have moved on). Distelli doesn't handle this well. We won't have
@@ -173,10 +177,17 @@ def deploy(description):
     else:
         fail("Either environment or host must be set")
 
-    release_id = load_release_id()
     (dirname, basename) = check_manifest()
 
-    args.extend(["-y", "-f", basename, "-r", release_id, "-m", description])
+    args.extend(["-y", "-f", basename, "-m", description])
+
+    release_id = load_release_id()
+    if release_id:
+        args.extend(["-r", release_id])
+
+    wait = os.getenv("WERCKER_DISTELLI_WAIT").lower() != "false"
+    if not wait:
+        args.extend(["-q"])
 
     cmd = "deploy %s" % " ".join(args)
     info(cmd)

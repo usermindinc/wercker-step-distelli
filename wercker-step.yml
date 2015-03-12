@@ -1,5 +1,5 @@
 name: distelli
-version: "0.1.3"
+version: "0.1.4"
 description: Executes a distelli CLI command
 keywords:
   - distelli
@@ -13,7 +13,7 @@ properties:
   branches:
     type: array
     required: false
-    default: ['master']
+    default: []
   command:
     type: string
     required: true
@@ -26,3 +26,7 @@ properties:
     type: string
     required: false
     default: usermind-release.txt
+  wait:
+    type: boolean
+    required: false
+    default: true
