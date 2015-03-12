@@ -185,7 +185,7 @@ def deploy(description):
     if release_id:
         args.extend(["-r", release_id])
 
-    wait = os.getenv("WERCKER_DISTELLI_WAIT")
+    wait = os.getenv("WERCKER_DISTELLI_WAIT").lower() != "false"
     if not wait:
         args.extend(["-q"])
 
