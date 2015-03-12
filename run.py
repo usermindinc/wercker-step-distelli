@@ -185,6 +185,10 @@ def deploy(description):
     if release_id:
         args.extend(["-r", release_id])
 
+    wait = os.getenv("WERCKER_DISTELLI_WAIT")
+    if not wait:
+        args.extend(["-q"])
+
     cmd = "deploy %s" % " ".join(args)
     info(cmd)
     output = invoke(cmd, capture=True)
