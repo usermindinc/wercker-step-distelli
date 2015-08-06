@@ -2,7 +2,6 @@
 
 export PYENV_ROOT="${WERCKER_CACHE_DIR}/.pyenv"
 PYENV_VIRTUALENV_ROOT="${PYENV_ROOT}/plugins/pyenv-virtualenv"
-PYTHON_VERSION=2.7.9
 
 if [ -d "${PYENV_ROOT}/.git" ]
 then
@@ -24,7 +23,7 @@ PATH="${PYENV_ROOT}/bin:${PATH}"
 eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
 
-if [ ! "${PYTHON_VERSION}" = "system" ]
+if [ ! "${PYTHON_VERSION:=2.7.9}" = "system" ]
 then
   pyenv install -s "${PYTHON_VERSION}"
 fi

@@ -1,5 +1,5 @@
 name: distelli
-version: "0.1.4"
+version: "0.1.5"
 description: Executes a distelli CLI command
 keywords:
   - distelli
