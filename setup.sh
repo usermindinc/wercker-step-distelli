@@ -7,8 +7,12 @@ if [ -d "${PYENV_ROOT}/.git" ]
 then
   info "Updating pyenv"
   pushd "${PYENV_ROOT}"
+  # Wercker v2 seems to corrupt symlinks
+  git checkout -- .
   git pull --quiet
   pushd "${PYENV_VIRTUALENV_ROOT}"
+  # Wercker v2 seems to corrupt symlinks
+  git checkout -- .
   git pull --quiet
   popd
   popd
