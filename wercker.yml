@@ -13,7 +13,7 @@ build:
     - script:
         name: go get
         code: |
-          go get -v -f ./...
+          go get -v -t ./...
 
     - script:
         name: go build
