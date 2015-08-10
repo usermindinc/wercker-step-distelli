@@ -1,10 +1,29 @@
-box: wercker/default
+box: wercker/golang
 
 build:
   steps:
     - shellcheck
 
     - validate-wercker-step
+
+    - setup-go-workspace
+
+    - wercker/golint
+
+    - script:
+        name: go get
+        code: |
+          go get -u -f ./...
+
+    - script:
+        name: go build
+        code: |
+          go build ./...
+
+    - script:
+        name: go test
+        code: |
+          go test ./...
 
     - copy-to-output:
         exclude: wercker.yml .git .gitignore install.sh
@@ -13,9 +32,4 @@ build:
         name: fetch distelli
         code: |
           wget -qO- http://download.distelli.com/setup | sh -s "${WERCKER_OUTPUT_DIR}"
-
-    - script:
-        name: verify setup
-        code: |
-          source "${WERCKER_SOURCE_DIR}/setup.sh"
 
