@@ -2,3 +2,6 @@
 /.idea/
 *.iml
 .python-version
+
+/wercker-step-distelli
+/DistelliCLI/
