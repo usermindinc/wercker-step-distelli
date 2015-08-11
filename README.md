@@ -49,6 +49,9 @@ build:
 
 # Changelog
 
+## 0.2.4
+ - fixing csv parsing
+
 ## 0.2.3
  - error handling
 
