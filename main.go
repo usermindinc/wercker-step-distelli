@@ -238,11 +238,16 @@ func push(buildURL string) error {
 		return err
 	}
 
-	invoke("push", "-f", basename, "-m", buildURL)
+	_, err = invoke("push", "-f", basename, "-m", buildURL)
+	if err != nil {
+		return err
+	}
+
 	releaseID, err := locateReleaseID(buildURL)
 	if err != nil {
 		return err
 	}
+
 	return saveReleaseID(releaseID)
 }
 
