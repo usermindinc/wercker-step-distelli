@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/csv"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -120,8 +121,17 @@ func locateReleaseID(buildURL string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	reader := csv.NewReader(output)
-	for row, err := reader.Read(); err != nil; {
+	for {
+		row, err := reader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return "", err
+		}
+
 		description := row[3]
 		if strings.Contains(description, buildURL) {
 			releaseID = row[1]
