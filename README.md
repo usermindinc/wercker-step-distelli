@@ -49,6 +49,9 @@ build:
 
 # Changelog
 
+## 0.2.1
+ - trap exit status
+
 ## 0.2.0
  - golang rewrite
 
