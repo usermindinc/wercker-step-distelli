@@ -169,6 +169,16 @@ func saveReleaseID(releaseID string) error {
 	return err
 }
 
+func run(name string, args ...string) error {
+	cmd := exec.Command(name, args...)
+	cmd.Stdout = os.Stdout
+	err := cmd.Run()
+	if err != nil {
+		err = errors.Errorf("Error running command \"%v %v\": %v", name, strings.Join(args, " "), err)
+	}
+	return err
+}
+
 func invoke(args ...string) (*bytes.Buffer, error) {
 	dirname, _, err := checkManifest()
 	if err != nil {
@@ -193,30 +203,24 @@ func invoke(args ...string) (*bytes.Buffer, error) {
 	// any local branches (except master), so create one with an appropriate name.
 
 	// Checkout the commit to ensure the branch is not current
-	if err = exec.Command("git", "checkout", "-q", gitCommit).Run(); err != nil {
+	if err = run("git", "checkout", "-q", gitCommit); err != nil {
 		return nil, err
 	}
 
 	// Force update the branch name
-	if err = exec.Command("git", "branch", "-f", gitBranch, gitCommit).Run(); err != nil {
+	if err = run("git", "branch", "-f", gitBranch, gitCommit); err != nil {
 		return nil, err
 	}
 
 	// Switch to the branch
-	if err = exec.Command("git", "checkout", "-q", gitBranch).Run(); err != nil {
+	if err = run("git", "checkout", "-q", gitBranch); err != nil {
 		return nil, err
 	}
 
 	var b bytes.Buffer
 	cmd := exec.Command(distelli, args...)
-	devnull, err := os.Open(os.DevNull)
-	if err != nil {
-		return nil, err
-	}
-	defer devnull.Close()
-
-	cmd.Stdin = devnull
 	cmd.Stdout = &b
+
 	if err = cmd.Run(); err != nil {
 		return nil, errors.Errorf("Error executing distelli %s\n%\n%s", strings.Join(args, " "), err.Error(), b.String())
 	}
@@ -301,16 +305,17 @@ func deploy(description string) error {
 }
 
 func main() {
-	cmd := exec.Command(distelli, "version")
-	cmd.Stdout = os.Stdout
-	cmd.Run()
-
 	log.SetFlags(0)
+
+	err := run(distelli, "version")
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	if !checkBranches() {
 		return
 	}
-	err := checkCredentials()
+	err = checkCredentials()
 	if err != nil {
 		log.Fatalln(err)
 	}

@@ -49,6 +49,9 @@ build:
 
 # Changelog
 
+## 0.2.2
+ - error handling
+
 ## 0.2.1
  - trap exit status
 
