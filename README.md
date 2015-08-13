@@ -49,6 +49,9 @@ build:
 
 # Changelog
 
+## 0.2.5
+ - fix release file creation
+
 ## 0.2.4
  - fixing csv parsing
 
