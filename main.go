@@ -169,7 +169,7 @@ func loadReleaseID() (string, error) {
 }
 
 func saveReleaseID(releaseID string) error {
-	releaseFile, err := os.OpenFile(releaseFilename, os.O_RDWR, 0644)
+	releaseFile, err := os.Create(releaseFilename)
 	if err != nil {
 		return err
 	}
