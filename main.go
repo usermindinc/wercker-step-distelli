@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/csv"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -14,7 +15,6 @@ import (
 
 	"github.com/go-errors/errors"
 	"gopkg.in/yaml.v2"
-	"fmt"
 )
 
 var releaseFilename = getenv("WERCKER_DISTELLI_RELEASEFILENAME", "usermind-release.txt")
@@ -168,7 +168,7 @@ func loadReleaseID() (string, error) {
 
 			reader := bufio.NewReader(releaseFile)
 			releaseID, err = reader.ReadString('\n')
-			if err != nil && err != errors.Is(err, io.EOF) {
+			if err != nil && !errors.Is(err, io.EOF) {
 				return "", errors.WrapPrefix(err, fmt.Sprintf("Error reading file %s", releaseFilename), 0)
 			}
 		}
