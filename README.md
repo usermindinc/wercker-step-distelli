@@ -49,6 +49,9 @@ build:
 
 # Changelog
 
+## 0.2.6
+ - fix release file reading; enhanced error messaging
+
 ## 0.2.5
  - fix release file creation
 

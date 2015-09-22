@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/csv"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -21,6 +22,10 @@ var releaseFilename = getenv("WERCKER_DISTELLI_RELEASEFILENAME", "usermind-relea
 var distelli = path.Join(os.Getenv("WERCKER_STEP_ROOT"), "DistelliCLI", "bin", "distelli")
 var gitBranch = os.Getenv("WERCKER_GIT_BRANCH")
 var gitCommit = os.Getenv("WERCKER_GIT_COMMIT")
+
+var DeployConflict = errors.Errorf("Both host and environment are set")
+var DeployMissing = errors.Errorf("Host or environment must be set")
+var BadReleaseFile = errors.Errorf("Release file is invalid")
 
 func getenv(key, value string) string {
 	v := os.Getenv(key)
@@ -150,17 +155,21 @@ func loadReleaseID() (string, error) {
 	releaseID := os.Getenv("WERCKER_DISTELLI_RELEASE")
 
 	if releaseID == "" {
-		if _, err := os.Stat(releaseFilename); err == nil {
+		if stat, err := os.Stat(releaseFilename); err == nil {
+			if stat.Size() <= 0 {
+				return "", errors.New(BadReleaseFile)
+			}
+
 			releaseFile, err := os.Open(releaseFilename)
 			if err != nil {
-				return "", err
+				return "", errors.WrapPrefix(err, fmt.Sprintf("Error opening file %s", releaseFilename), 0)
 			}
 			defer releaseFile.Close()
 
 			reader := bufio.NewReader(releaseFile)
 			releaseID, err = reader.ReadString('\n')
-			if err != nil {
-				return "", err
+			if err != nil && !errors.Is(err, io.EOF) {
+				return "", errors.WrapPrefix(err, fmt.Sprintf("Error reading file %s", releaseFilename), 0)
 			}
 		}
 	}
@@ -171,11 +180,11 @@ func loadReleaseID() (string, error) {
 func saveReleaseID(releaseID string) error {
 	releaseFile, err := os.Create(releaseFilename)
 	if err != nil {
-		return err
+		return errors.WrapPrefix(err, "Error saving release ID", 0)
 	}
 	defer releaseFile.Close()
 
-	_, err = releaseFile.WriteString(releaseID)
+	_, err = releaseFile.WriteString(releaseID + "\n")
 	return err
 }
 
@@ -269,13 +278,13 @@ func deploy(description string) error {
 
 	if environment != "" {
 		if host != "" {
-			return errors.Errorf("Both environment and host are set")
+			return errors.New(DeployConflict)
 		}
 		args = append(args, "-e", environment)
 	} else if host != "" {
 		args = append(args, "-h", host)
 	} else {
-		return errors.Errorf("Either environment or host must be set")
+		return errors.New(DeployMissing)
 	}
 
 	_, basename, err := checkManifest()
@@ -307,7 +316,7 @@ func deploy(description string) error {
 
 	buffer, err := invoke(args...)
 	if err != nil {
-		return err
+		return errors.WrapPrefix(err, "Error invoking distelli", 0)
 	}
 	output := buffer.String()
 
@@ -319,12 +328,22 @@ func deploy(description string) error {
 	return nil
 }
 
+func printAndExit(err error) {
+	if err != nil {
+		if err, ok := err.(*errors.Error); ok {
+			log.Fatalln(err.ErrorStack())
+		} else {
+			panic(err)
+		}
+	}
+}
+
 func main() {
 	log.SetFlags(0)
 
 	err := run(distelli, "version")
 	if err != nil {
-		log.Fatalln(err)
+		printAndExit(err)
 	}
 
 	if !checkBranches() {
@@ -332,7 +351,7 @@ func main() {
 	}
 	err = checkCredentials()
 	if err != nil {
-		log.Fatalln(err)
+		printAndExit(err)
 	}
 
 	command := os.Getenv("WERCKER_DISTELLI_COMMAND")
@@ -351,6 +370,6 @@ func main() {
 	}
 
 	if err != nil {
-		log.Fatalln(err)
+		printAndExit(err)
 	}
 }
