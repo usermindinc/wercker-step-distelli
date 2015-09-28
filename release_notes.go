@@ -1,32 +1,16 @@
 package main
 
 import (
-	"errors"
-	"flag"
+	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
-	"json"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
-	"path"
-	"strings"
 )
 
-if os.Getenv("CI"){
-	var gitBranch = os.Getenv("WERCKER_GIT_BRANCH")
-	var gitCommit = os.Getenv("WERCKER_GIT_COMMIT")
-	var distelliApp = os.Getenv("DISTELLI_APP")
-	var distelliKey = os.Getenv("DISTELLI_API_KEY")
-	var gitLink = fmt.Sprintf("%s/%s/%s/commit", os.Getenv("WERCKER_GIT_DOMAIN"), os.Getenv("WERCKER_GIT_OWNER"), os.Getenv("WERCKER_GIT_REPOSITORY")
-} else {
-	var gitCommit = "HEAD"
-	var distelliApp = "skylab"
-	var distelliKey = "jly93qxpswrqzc3t7b5hphy7tfj21761ajd8a"
-	var gitLink = fmt.Sprintf("github.com/usermindinc/%s/commit", distelliApp)
-}
+var gitLink = fmt.Sprintf("%s/%s/%s/commit", os.Getenv("WERCKER_GIT_DOMAIN"), os.Getenv("WERCKER_GIT_OWNER"), os.Getenv("WERCKER_GIT_REPOSITORY"))
 
 type Release struct {
 	Release_version string
@@ -41,10 +25,10 @@ type Body struct {
 	Releases []Release
 }
 
-func getLastCommit() (string, err) {
+func getLastCommit() (string, error) {
 	var b Body
 
-	resp, err := http.Get(fmt.Sprintf("https://api.distelli.com/umdevs/apps/%s/releases?apiToken=%s&max_results=1&order=desc", distelliApp, apiToken)
+	resp, err := http.Get(fmt.Sprintf("https://api.distelli.com/umdevs/apps/%s/releases?apiToken=%s&max_results=1&order=desc", distelliApp, distelliKey))
 	if err != nil {
 		return "", err
 	}
@@ -56,17 +40,20 @@ func getLastCommit() (string, err) {
 		return "", err
 	}
 
-	err := json.Unmarshal(body, &b)
+	err = json.Unmarshal(body, &b)
 	if err != nil {
 		return "", err
 	}
 
-	return b.Releases[0].Commit.Commit_id
+	return b.Releases[0].Commit.Commit_id, err
 }
 
-func generateReleaseNotes() (err) {
+func generateReleaseNotes() (error){
 	format := fmt.Sprintf("%%s%%n    %%<(16,trunc)%%an %s/%%h%%n", gitLink)
-	prev_id := getLastCommit()
+	prev_id, err := getLastCommit()
+	if err != nil {
+		return err
+	}
 
 	commits, err := exec.Command(fmt.Sprintf("git log %s.. --no-merges --format=\"%s\"", prev_id, format)).Output()
 	if err != nil {
@@ -78,12 +65,23 @@ func generateReleaseNotes() (err) {
 		return err
 	}
 
-	defer f.Close()
+	defer notes.Close()
 
-	f.WriteString("This release contains the following changes:\n\n")
-	f.Sync()
-	f.WriteString(notes)
-	f.Sync()
+	notes.WriteString("This release contains the following changes:\n\n")
+	notes.Sync()
+	notes.Write(commits)
+	notes.Sync()
+
+	return nil
+}
+
+func test() {
+if os.Getenv("CI") == ""{
+		gitCommit = "HEAD"
+		distelliApp = "skylab"
+		distelliKey = "jly93qxpswrqzc3t7b5hphy7tfj21761ajd8a"
+		gitLink = fmt.Sprintf("github.com/usermindinc/%s/commit", distelliApp)
+	}
 }
 
 
