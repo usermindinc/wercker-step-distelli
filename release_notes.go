@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
+	"log"
 	"os"
 	"os/exec"
 )
@@ -45,15 +45,19 @@ func getLastCommit() (string, error) {
 		return "", err
 	}
 
-	return b.Releases[0].Commit.Commit_id, err
+	return b.Releases[0].Commit.Commit_id, nil
 }
 
 func generateReleaseNotes() (error){
 	format := fmt.Sprintf("%%s%%n    %%<(16,trunc)%%an %s/%%h%%n", gitLink)
+	
 	prev_id, err := getLastCommit()
 	if err != nil {
 		return err
 	}
+
+	log.Printf("Generating release notes for %s since %s", distelliApp, prev_id)
+
 
 	commits, err := exec.Command(fmt.Sprintf("git log %s.. --no-merges --format=\"%s\"", prev_id, format)).Output()
 	if err != nil {
@@ -74,14 +78,3 @@ func generateReleaseNotes() (error){
 
 	return nil
 }
-
-func test() {
-if os.Getenv("CI") == ""{
-		gitCommit = "HEAD"
-		distelliApp = "skylab"
-		distelliKey = "jly93qxpswrqzc3t7b5hphy7tfj21761ajd8a"
-		gitLink = fmt.Sprintf("github.com/usermindinc/%s/commit", distelliApp)
-	}
-}
-
-
