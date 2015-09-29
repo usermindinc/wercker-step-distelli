@@ -124,7 +124,7 @@ func locateReleaseID(buildURL string) (string, error) {
 		return "", err
 	}
 
-	output, err := invoke("list", "releases", "-n", app, "-f", "csv")
+	output, err := invoke(nil, "list", "releases", "-n", app, "-f", "csv")
 	if err != nil {
 		return "", err
 	}
@@ -242,7 +242,7 @@ func invoke(args ...string) (*bytes.Buffer, error) {
 	cmd := exec.Command(distelli, args...)
 	cmd.Stdout = &b
 
-	if err = cmd.Run(); err != nil {
+	if err = cmd.Start(); err != nil {
 		return nil, errors.Errorf("Error executing distelli %s\n%\n%s", strings.Join(args, " "), err.Error(), b.String())
 	}
 
@@ -259,7 +259,23 @@ func push(buildURL string) error {
 		return err
 	}
 
-	_, err = invoke("push", "-f", basename, "-m", buildURL)
+	rn, rn_err := generateReleaseNotes()
+	if rn_err != nil {
+		log.Println("Error generating release notes")
+		log.Print(err)
+	}
+	input, rn_err := ioutil.ReadFile("release_notes")
+	if rn_err != nil {
+		log.Println("Error reading release notes")
+		log.Print(err)
+	}
+
+	if rn_err != nil {
+		_, err = invoke("push", "-f", basename, "-m", buildURL, "-rl", "<", rn)
+	} else {
+		_, err = invoke("push", "-f", basename, "-m", buildURL)
+	}
+
 	if err != nil {
 		return err
 	}
@@ -316,7 +332,7 @@ func deploy(description string) error {
 	}
 	log.Println(stupidity...)
 
-	buffer, err := invoke(args...)
+	buffer, err := invoke(nil, args...)
 	if err != nil {
 		return errors.WrapPrefix(err, "Error invoking distelli", 0)
 	}

@@ -56,19 +56,16 @@ func getLastCommit() (string, error) {
 	return b.Releases[0].Commit.Commit_id, nil
 }
 
-func generateReleaseNotes() (error){
+func generateReleaseNotes() (string, error){
 	format := fmt.Sprintf("%%s%%n    %%<(16,trunc)%%an %s/%%h%%n", gitLink)
+	release_notes := "release_notes"
 	
 	prev_id, err := getLastCommit()
 	if err != nil {
-		log.Print(err)
 		return err
 	}
 
 	log.Printf("Generating release notes for %s since %s", distelliApp, prev_id)
-
-	//This is BAD TEST CODE:
-	prev_id = "HEAD^^"
 
 	cmd := exec.Command("git", "log", prev_id + ".." , "--no-merges", "--format=" + format)
 	commits, err := cmd.Output()
@@ -77,7 +74,7 @@ func generateReleaseNotes() (error){
 		return err
 	}
 
-	notes, err := os.Create("release_notes")
+	notes, err := os.Create(release_notes)
 	if err != nil {
 		return err
 	}
@@ -89,5 +86,5 @@ func generateReleaseNotes() (error){
 	notes.Write(commits)
 	notes.Sync()
 
-	return nil
+	return release_notes
 }
