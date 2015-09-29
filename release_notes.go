@@ -26,6 +26,10 @@ type Body struct {
 }
 
 func getLastCommit() (string, error) {
+	if distelliKey == "" {
+		return "", fmt.Errorf("Distelli API Key not present")
+	}
+
 	var b Body
 
 	resp, err := http.Get(fmt.Sprintf("https://api.distelli.com/umdevs/apps/%s/releases?apiToken=%s&max_results=1&order=desc", distelliApp, distelliKey))
@@ -34,6 +38,10 @@ func getLastCommit() (string, error) {
 	}
 	
 	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return "", fmt.Errorf("%s error requesting release information for distelli app %s", resp.Status, distelliApp)
+	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -53,14 +61,19 @@ func generateReleaseNotes() (error){
 	
 	prev_id, err := getLastCommit()
 	if err != nil {
+		log.Print(err)
 		return err
 	}
 
 	log.Printf("Generating release notes for %s since %s", distelliApp, prev_id)
 
+	//This is BAD TEST CODE:
+	prev_id = "HEAD^^"
 
-	commits, err := exec.Command(fmt.Sprintf("git log %s.. --no-merges --format=\"%s\"", prev_id, format)).Output()
+	cmd := exec.Command("git", "log", prev_id + ".." , "--no-merges", "--format=" + format)
+	commits, err := cmd.Output()
 	if err != nil {
+		log.Printf("Git commit %s doesn't exist in this branch", prev_id)
 		return err
 	}
 
