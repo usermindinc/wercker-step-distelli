@@ -20,8 +20,8 @@ import (
 var releaseFilename = getenv("WERCKER_DISTELLI_RELEASEFILENAME", "usermind-release.txt")
 
 var distelli = path.Join(os.Getenv("WERCKER_STEP_ROOT"), "DistelliCLI", "bin", "distelli")
-var gitBranch = os.Getenv("WERCKER_GIT_BRANCH")
-var gitCommit = os.Getenv("WERCKER_GIT_COMMIT")
+var gitBranch = strings.TrimSpace(os.Getenv("WERCKER_GIT_BRANCH"))
+var gitCommit = strings.TrimSpace(os.Getenv("WERCKER_GIT_COMMIT"))
 
 var DeployConflict = errors.Errorf("Both host and environment are set")
 var DeployMissing = errors.Errorf("Host or environment must be set")
@@ -43,7 +43,7 @@ func checkBranches() bool {
 	}
 
 	for _, branch := range strings.Split(branches, ",") {
-		if branch == gitBranch {
+		if strings.TrimSpace(branch) == gitBranch {
 			return true
 		}
 	}
@@ -174,7 +174,7 @@ func loadReleaseID() (string, error) {
 		}
 	}
 
-	return releaseID, nil
+	return strings.TrimSpace(releaseID), nil
 }
 
 func saveReleaseID(releaseID string) error {
@@ -241,7 +241,7 @@ func invoke(args ...string) (*bytes.Buffer, error) {
 	cmd.Stdout = &b
 
 	if err = cmd.Run(); err != nil {
-		return nil, errors.Errorf("Error executing distelli %s\n%\n%s", strings.Join(args, " "), err.Error(), b.String())
+		return nil, errors.Errorf("Error executing distelli %s\n%s\n%s\n", strings.Join(args, " "), err.Error(), b.String())
 	}
 
 	if err = os.Chdir(oldCwd); err != nil {
