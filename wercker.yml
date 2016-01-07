@@ -1,8 +1,10 @@
-box: golang
+box: wercker/golang
 
 build:
   steps:
     - shellcheck
+
+    - validate-wercker-step
 
     - setup-go-workspace
 
