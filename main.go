@@ -19,7 +19,7 @@ import (
 
 var releaseFilename = getenv("WERCKER_DISTELLI_RELEASEFILENAME", "usermind-release.txt")
 
-var distelli = path.Join(os.Getenv("WERCKER_STEP_ROOT"), "DistelliCLI", "bin", "distelli")
+var distelli = path.Join(os.Getenv("WERCKER_STEP_ROOT"), "distelli")
 var gitBranch = strings.TrimSpace(os.Getenv("WERCKER_GIT_BRANCH"))
 var gitCommit = strings.TrimSpace(os.Getenv("WERCKER_GIT_COMMIT"))
 
