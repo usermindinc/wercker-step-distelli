@@ -49,6 +49,9 @@ build:
 
 # Changelog
 
+## 0.2.9
+ - Pathing has changed for distelli cli
+
 ## 0.2.8
  - updating to force update of distelli version
 
