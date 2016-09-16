@@ -49,6 +49,9 @@ build:
 
 # Changelog
 
+## 0.2.8
+ - updating to force update of distelli version
+
 ## 0.2.6
  - fix release file reading; enhanced error messaging
 
