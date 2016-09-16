@@ -36,4 +36,4 @@ build:
         name: fetch distelli
         code: |
           wget -qO- https://www.distelli.com/download/client | DISTELLI_INSTALL_DIR="${WERCKER_OUTPUT_DIR}" sh
-          sudo $DISTELLI_INSTALL_DIR/distelli agent install
+          sudo "${WERCKER_OUTPUT_DIR}"/distelli agent install
